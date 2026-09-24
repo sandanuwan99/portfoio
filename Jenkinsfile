@@ -141,10 +141,20 @@ pipeline {
         stage('8. Deploy to Kubernetes (EKS)') {
             steps {
                 echo 'Deploying latest container images to Kubernetes Cluster...'
-                // Applies manifests and triggers zero-downtime rolling update
-                // bat "kubectl apply -f k8s/"
-                // bat "kubectl set image deployment/portfolio-backend-deployment backend=%AWS_ACCOUNT_ID%.dkr.ecr.%AWS_DEFAULT_REGION%.amazonaws.com/${BACKEND_IMAGE}:${IMAGE_TAG}"
-                // bat "kubectl set image deployment/portfolio-frontend-deployment frontend=%AWS_ACCOUNT_ID%.dkr.ecr.%AWS_DEFAULT_REGION%.amazonaws.com/${FRONTEND_IMAGE}:${IMAGE_TAG}"
+                bat """
+                    kubectl apply -f k8s/namespace.yaml
+                    kubectl apply -f k8s/secrets-config.yaml
+                    kubectl apply -f k8s/sqlserver-deployment.yaml
+                    kubectl apply -f k8s/backend-deployment.yaml
+                    kubectl apply -f k8s/frontend-deployment.yaml
+                    kubectl apply -f k8s/ingress.yaml
+
+                    kubectl set image deployment/portfolio-backend backend=%AWS_ACCOUNT_ID%.dkr.ecr.%AWS_DEFAULT_REGION%.amazonaws.com/${BACKEND_IMAGE}:${IMAGE_TAG} -n portfolio
+                    kubectl set image deployment/portfolio-frontend frontend=%AWS_ACCOUNT_ID%.dkr.ecr.%AWS_DEFAULT_REGION%.amazonaws.com/${FRONTEND_IMAGE}:${IMAGE_TAG} -n portfolio
+
+                    kubectl rollout status deployment/portfolio-backend -n portfolio --timeout=180s
+                    kubectl rollout status deployment/portfolio-frontend -n portfolio --timeout=180s
+                """
                 echo 'Deployment rollout completed successfully!'
             }
         }

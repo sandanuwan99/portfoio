@@ -1,0 +1,87 @@
+# =====================================================================
+# Database Workload: Microsoft SQL Server 2022
+# Includes Persistent Volume Claim (PVC) and internal ClusterIP Service
+# =====================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlserver-pvc
+  namespace: portfolio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-sqlserver
+  namespace: portfolio
+  labels:
+    app: portfolio-sqlserver
+    tier: database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: portfolio-sqlserver
+  template:
+    metadata:
+      labels:
+        app: portfolio-sqlserver
+        tier: database
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 1433
+              name: mssql
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_PID
+              value: "Developer"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: portfolio-secrets
+                  key: MSSQL_SA_PASSWORD
+          resources:
+            requests:
+              memory: "1536Mi"
+              cpu: "500m"
+            limits:
+              memory: "2560Mi"
+              cpu: "1500m"
+          volumeMounts:
+            - name: sqlserver-storage
+              mountPath: /var/opt/mssql
+      volumes:
+        - name: sqlserver-storage
+          persistentVolumeClaim:
+            claimName: sqlserver-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver-service
+  namespace: portfolio
+  labels:
+    app: portfolio-sqlserver
+spec:
+  type: ClusterIP
+  ports:
+    - port: 1433
+      targetPort: 1433
+      name: mssql
+  selector:
+    app: portfolio-sqlserver
