@@ -1,0 +1,26 @@
+{
+  "name": "janitha-portfolio-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Janitha Sandanuwan - Software Engineer Portfolio Monorepo (Next.js Frontend + Spring Boot Backend)",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "frontend:install": "npm install --prefix frontend",
+    "frontend:dev": "npm run dev --prefix frontend",
+    "frontend:build": "npm run build --prefix frontend",
+    "backend:build": "mvn -f backend/pom.xml clean package -DskipTests",
+    "backend:run": "mvn -f backend/pom.xml spring-boot:run"
+  },
+  "keywords": [
+    "portfolio",
+    "software-engineer",
+    "nextjs",
+    "spring-boot",
+    "sql-server",
+    "full-stack"
+  ],
+  "author": "Janitha Sandanuwan <janithasandanuwa@gmail.com>"
+}

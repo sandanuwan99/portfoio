@@ -1,0 +1,9 @@
+# =====================================================================
+# Terraform Variable Values Example
+# Rename this file to terraform.tfvars to customize your settings
+# =====================================================================
+
+aws_region            = "ap-south-1"      # Mumbai (closest to Sri Lanka) or "us-east-1"
+environment           = "production"
+project_name          = "janitha-portfolio"
+image_retention_count = 10

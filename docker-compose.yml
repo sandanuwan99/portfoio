@@ -1,0 +1,68 @@
+services:
+  # -------------------------------------------------------------
+  # 1. Database: Microsoft SQL Server 2022
+  # -------------------------------------------------------------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: portfolio-sqlserver
+    restart: always
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong@Password123"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - portfolio-network
+
+  # -------------------------------------------------------------
+  # 2. Backend: Spring Boot 3 Enterprise API
+  # -------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio-backend
+    restart: always
+    depends_on:
+      - sqlserver
+    environment:
+      PORT: 8080
+      DATASOURCE_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=master;encrypt=true;trustServerCertificate=true"
+      DB_USERNAME: "sa"
+      DB_PASSWORD: "YourStrong@Password123"
+      SQL_INIT_MODE: "never"
+      FRONTEND_URL: "http://localhost:3000"
+    ports:
+      - "8080:8080"
+    networks:
+      - portfolio-network
+
+  # -------------------------------------------------------------
+  # 3. Frontend: Next.js 16 Web Application
+  # -------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: portfolio-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: "http://localhost:8080"
+    ports:
+      - "3000:3000"
+    networks:
+      - portfolio-network
+
+networks:
+  portfolio-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+    driver: local
