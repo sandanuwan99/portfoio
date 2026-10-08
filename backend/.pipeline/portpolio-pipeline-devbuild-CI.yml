@@ -43,7 +43,10 @@ stages:
             inputs:
               targetType: inline
               script: |
-                echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
+                echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            env:
+              DOCKERHUB_USERNAME: $(DOCKERHUB_USERNAME)
+              DOCKERHUB_PASSWORD: $(DOCKERHUB_PASSWORD)
 
           # Step 2: Build Spring Boot Docker Image
           - task: Docker@2
