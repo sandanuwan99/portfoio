@@ -1,0 +1,71 @@
+# =====================================================================
+# Azure DevOps CI Pipeline: Portfolio Dev Frontend Build & Push
+# Project: Janitha Sandanuwan Full-Stack Portfolio (Next.js 16 Web App)
+# Standard: Dockerized Next.js Build & Docker Hub Container Registry Push
+# =====================================================================
+
+name: Portfolio Dev Frontend Deployment Build - CI
+
+# Trigger on semantic version tags (e.g., v1.0.0, v1.2.3)
+trigger:
+  tags:
+    include:
+      - v*.*.*
+  # Uncomment below if you also want automatic builds on branches (e.g., dev or main)
+  # branches:
+  #   include:
+  #     - dev
+  #     - main
+
+# Pipeline Variables (Can also be overridden by Azure DevOps Variable Groups)
+variables:
+  vmImageName: 'ubuntu-latest'
+  DockerfilePath: '$(Build.SourcesDirectory)/frontend/Dockerfile'
+  buildContext: '$(Build.SourcesDirectory)/frontend'
+  ImageRepository: 'sandanuwan99/portfolio-frontend' # Docker Hub repository
+  DockerRegistryServiceConnection: 'dockerhub-service-connection' # Azure DevOps Service Connection Name
+  VersionNumber: '$(Build.BuildId)'
+  NODE_ENV: 'production'
+  NEXT_PUBLIC_API_URL: 'http://localhost:8080' # Change to your production API domain if deployed
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+  - stage: Build
+    displayName: 'Portfolio FrontEnd Build Image Stage'
+    jobs:
+      - job: Build
+        displayName: 'Portfolio Build and Push Docker Image'
+        steps:
+          # Step 1: Docker Hub Login via Azure DevOps Service Connection
+          - task: Docker@2
+            displayName: 'Docker Hub Login'
+            inputs:
+              command: login
+              containerRegistry: $(DockerRegistryServiceConnection)
+
+          # Step 2: Build Next.js Docker Image with Build Arguments
+          - task: Docker@2
+            displayName: 'Portfolio Build the Docker Image'
+            inputs:
+              command: build
+              repository: $(ImageRepository)
+              containerRegistry: $(DockerRegistryServiceConnection)
+              dockerfile: $(DockerfilePath)
+              buildContext: $(buildContext)
+              arguments: "--build-arg NODE_ENV=$(NODE_ENV) --build-arg NEXT_PUBLIC_API_URL=$(NEXT_PUBLIC_API_URL)"
+              tags: |
+                $(VersionNumber)
+                latest
+
+          # Step 3: Push Docker Image to Container Registry (Docker Hub)
+          - task: Docker@2
+            displayName: 'Portfolio Push the Docker Image to Container Registry'
+            inputs:
+              command: push
+              repository: $(ImageRepository)
+              containerRegistry: $(DockerRegistryServiceConnection)
+              tags: |
+                $(VersionNumber)
+                latest
