@@ -1,7 +1,8 @@
 # =====================================================================
 # Stage 1: Build the Spring Boot JAR using Maven
 # =====================================================================
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
+ARG MAVEN_VERSION=3.9.6
+FROM maven:${MAVEN_VERSION}-eclipse-temurin-17-alpine AS builder
 
 WORKDIR /build
 

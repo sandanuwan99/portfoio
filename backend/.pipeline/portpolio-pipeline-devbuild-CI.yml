@@ -1,0 +1,71 @@
+# =====================================================================
+# Azure DevOps CI Pipeline: Portfolio Dev Backend Build & Push
+# Project: Janitha Sandanuwan Full-Stack Portfolio (Backend API)
+# Standard: Dockerized Spring Boot Build & Docker Hub / Container Registry Push
+# =====================================================================
+
+name: Portfolio Dev Backend Deployment Build - CI
+
+# Trigger on semantic version tags (e.g., v1.0.0, v1.2.3)
+trigger:
+  tags:
+    include:
+      - v*.*.*
+  # Uncomment below if you also want automatic builds on branches (e.g., dev or main)
+  # branches:
+  #   include:
+  #     - dev
+  #     - main
+
+# Pipeline Variables (Can also be overridden by Azure DevOps Variable Groups)
+variables:
+  vmImageName: 'ubuntu-latest'
+  DockerfilePath: '$(Build.SourcesDirectory)/backend/Dockerfile'
+  buildContext: '$(Build.SourcesDirectory)/backend'
+  ImageRepository: '$(DOCKERHUB_USERNAME)/portfolio-backend' # Replace with your Docker Hub repository: <username>/portfolio-backend
+  DockerRegistryServiceConnection: 'dockerhub-service-connection' # Azure DevOps Service Connection Name
+  MAVEN_VERSION: '3.9.6'
+  VersionNumber: '$(Build.BuildId)'
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+  - stage: DEV_BuildPush
+    displayName: 'Portfolio Dev Backend Build Image Stage'
+    jobs:
+      - job: DEV_BuildPush
+        displayName: 'Portfolio Dev Backend Build and Push Docker Image Job'
+        steps:
+          # Step 1: Docker Hub Login via credentials stored in Azure DevOps Pipeline Secrets
+          - task: Bash@3
+            displayName: 'Docker Hub Login'
+            inputs:
+              targetType: inline
+              script: |
+                echo "$(DOCKERHUB_PASSWORD)" | docker login -u "$(DOCKERHUB_USERNAME)" --password-stdin
+
+          # Step 2: Build Spring Boot Docker Image
+          - task: Docker@2
+            displayName: 'Portfolio Dev Backend Build the Docker Image'
+            inputs:
+              command: build
+              repository: $(ImageRepository)
+              containerRegistry: $(DockerRegistryServiceConnection)
+              dockerfile: $(DockerfilePath)
+              buildContext: $(buildContext)
+              arguments: --build-arg MAVEN_VERSION=$(MAVEN_VERSION)
+              tags: |
+                $(VersionNumber)
+                latest
+
+          # Step 3: Push Docker Image to Docker Hub / Container Registry
+          - task: Docker@2
+            displayName: 'Portfolio Dev Backend Push the Docker Image to Container Registry'
+            inputs:
+              command: push
+              repository: $(ImageRepository)
+              containerRegistry: $(DockerRegistryServiceConnection)
+              tags: |
+                $(VersionNumber)
+                latest
