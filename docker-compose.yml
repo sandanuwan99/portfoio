@@ -8,7 +8,6 @@ services:
     restart: always
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrong@Password123"
       MSSQL_PID: "Developer"
     ports:
       - "1433:1433"
@@ -26,14 +25,13 @@ services:
       dockerfile: Dockerfile
     container_name: portfolio-backend
     restart: always
-    depends_on:
-      - sqlserver
     environment:
       PORT: 8080
-      DATASOURCE_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=master;encrypt=true;trustServerCertificate=true"
-      DB_USERNAME: "sa"
-      DB_PASSWORD: "YourStrong@Password123"
+      DB_HOST: host.docker.internal
+      DB_PORT: "1433"
+      DB_NAME: portfolio_db
       SQL_INIT_MODE: "never"
+      JPA_DDL_AUTO: "update"
       FRONTEND_URL: "http://localhost:3000"
     ports:
       - "8080:8080"
