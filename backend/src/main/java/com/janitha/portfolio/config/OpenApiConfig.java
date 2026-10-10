@@ -32,6 +32,7 @@ public class OpenApiConfig {
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(
+                        new Server().url("/").description("Current Environment Server"),
                         new Server().url("http://localhost:" + serverPort).description("Local Development Server"),
                         new Server().url("https://api.janitha-sandanuwan.dev").description("Production Server")
                 ));

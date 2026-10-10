@@ -1,66 +1,57 @@
+
 services:
   # -------------------------------------------------------------
-  # 1. Database: Microsoft SQL Server 2022
-  # -------------------------------------------------------------
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: portfolio-sqlserver
-    restart: always
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Developer"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserver_data:/var/opt/mssql
-    networks:
-      - portfolio-network
-
-  # -------------------------------------------------------------
-  # 2. Backend: Spring Boot 3 Enterprise API
+  # 1. Backend: Spring Boot API
   # -------------------------------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: portfolio-backend
-    restart: always
+    restart: unless-stopped
     environment:
-      PORT: 8080
-      DB_HOST: host.docker.internal
-      DB_PORT: "1433"
-      DB_NAME: portfolio_db
+      PORT: "8080"
+
+      # Azure SQL Database
+      DATASOURCE_URL: "jdbc:sqlserver://janitha-portfolio-sql-2026.database.windows.net:1433;databaseName=portfolio_db;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30"
+      DB_USERNAME: "CloudSAeddc40d5"
+      DB_PASSWORD: "Janitha@123"
+
       SQL_INIT_MODE: "never"
       JPA_DDL_AUTO: "update"
       FRONTEND_URL: "http://localhost:3000"
+
     ports:
       - "8080:8080"
+
     networks:
       - portfolio-network
 
   # -------------------------------------------------------------
-  # 3. Frontend: Next.js 16 Web Application
+  # 2. Frontend: Next.js Application
   # -------------------------------------------------------------
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: portfolio-frontend
-    restart: always
+    restart: unless-stopped
     depends_on:
       - backend
+
     environment:
-      PORT: 3000
+      PORT: "3000"
       NEXT_PUBLIC_API_URL: "http://localhost:8080"
+
     ports:
       - "3000:3000"
+
     networks:
       - portfolio-network
 
+# -------------------------------------------------------------
+# Network Configuration
+# -------------------------------------------------------------
 networks:
   portfolio-network:
     driver: bridge
-
-volumes:
-  sqlserver_data:
-    driver: local
