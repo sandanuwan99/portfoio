@@ -69,3 +69,27 @@ stages:
               tags: |
                 $(VersionNumber)
                 latest
+
+  # -------------------------------------------------------------------
+  # Stage 2: Continuous Deployment (CD) to Azure Container Apps
+  # -------------------------------------------------------------------
+  - stage: Deploy
+    displayName: 'Portfolio FrontEnd Deploy Stage'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Deploy
+        displayName: 'Deploy Frontend to Azure Container Apps'
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Deploy Image to Azure Container App'
+            inputs:
+              azureSubscription: 'azure-service-connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "Deploying $(ImageRepository):$(VersionNumber) to Azure Container Apps..."
+                az containerapp update \
+                  --name portfolio-frontend \
+                  --resource-group portfolio-rg \
+                  --image $(ImageRepository):$(VersionNumber)
